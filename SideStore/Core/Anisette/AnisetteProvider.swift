@@ -14,7 +14,7 @@ enum AnisetteProvider {
         // Apple now rejects the identities on-device (Android) anisette can offer: Android client info gets
         // 503 from GSA and macOS client info gets -80045. Move existing installs to a Windows ADI server once,
         // dropping the adi.pb that was provisioned by the on-device libraries.
-        let migrationKey = "SideStore.windowsAnisetteServerV1"
+        let migrationKey = "SideStore.windowsAnisetteServerV2"  // V2: identifier now sent base64 like iloader, re-provision once more
         if !UserDefaults.standard.bool(forKey: migrationKey) {
             debugLog("[AnisetteProvider] Switching to remote Windows ADI anisette; resetting adi.pb")
             UserDefaults.standard.useOnDeviceAnisette = false
