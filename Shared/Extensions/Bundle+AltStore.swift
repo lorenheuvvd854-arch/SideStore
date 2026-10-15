@@ -98,8 +98,11 @@ public extension Bundle
     
     // @livecontainer
     @objc dynamic var altstoreAppGroup: String? {
-        let appGroup = self.appGroups.first { $0.contains(Bundle.baseAltStoreAppGroupID) }
-        return appGroup
+        let groups = self.appGroups
+        // Re-signers (SideInstaller, Sideloadly...) often rename the group; take any group the app was given.
+        return groups.first { $0.contains(Bundle.baseAltStoreAppGroupID) }
+            ?? groups.first { $0.lowercased().contains("sidestore") || $0.lowercased().contains("altstore") }
+            ?? groups.first
     }
     
 }

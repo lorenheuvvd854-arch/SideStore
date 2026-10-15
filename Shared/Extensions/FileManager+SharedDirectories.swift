@@ -14,12 +14,16 @@ public extension FileManager
         #if os(tvOS)
         return self.cachesDirectory
         #else
-        guard let appGroup = Bundle.main.altstoreAppGroup else {
-            return nil
+        if let appGroup = Bundle.main.altstoreAppGroup,
+           let sharedDirectoryURL = self.containerURL(forSecurityApplicationGroupIdentifier: appGroup) {
+            return sharedDirectoryURL
         }
-        
-        let sharedDirectoryURL = self.containerURL(forSecurityApplicationGroupIdentifier: appGroup)
-        return sharedDirectoryURL
+
+        // No usable App Group (signed without one): keep the data in the app's own container instead of refusing to start.
+        guard let support = self.urls(for: .applicationSupportDirectory, in: .userDomainMask).first else { return nil }
+        let privateURL = support.appendingPathComponent("SharedFallback", isDirectory: true)
+        try? self.createDirectory(at: privateURL, withIntermediateDirectories: true)
+        return privateURL
         #endif
     }
     
