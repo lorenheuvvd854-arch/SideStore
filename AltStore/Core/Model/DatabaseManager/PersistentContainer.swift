@@ -133,6 +133,12 @@ open class PersistentContainer: NSPersistentContainer, @unchecked Sendable {
             }
         }
         
+        // A retry after a later start-up step failed: the store is already open, adding it again throws
+        // "Can't add the same store twice" and hides the real error.
+        if !self.persistentStoreCoordinator.persistentStores.isEmpty {
+            return
+        }
+
         try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
             super.loadPersistentStores { [weak self] description, error in
                 guard let self = self else { return }
