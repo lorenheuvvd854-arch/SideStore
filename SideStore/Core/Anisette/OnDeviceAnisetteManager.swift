@@ -48,6 +48,14 @@ public actor OnDeviceAnisetteManager {
 
         let identifierUUID = await AnisetteConfigManager.shared.resolveDeviceIdentifier()
 
+        // adi.pb provisioned while we still claimed to be a Mac keeps failing with -80045; provision once more as Android.
+        let identityMigrationKey = "SideStore.anisetteAndroidIdentityV1"
+        if !UserDefaults.standard.bool(forKey: identityMigrationKey) {
+            debugLog("[OnDeviceAnisetteManager] [Fetch] Dropping adi.pb provisioned under the old macOS identity")
+            AnisetteConfigManager.shared.anisetteAdiBlob = nil
+            UserDefaults.standard.set(true, forKey: identityMigrationKey)
+        }
+
         var existingAdiPbData: Data? = nil
         if let base64Blob = AnisetteConfigManager.shared.anisetteAdiBlob,
            let decoded = Data(base64Encoded: base64Blob, options: .ignoreUnknownCharacters),
