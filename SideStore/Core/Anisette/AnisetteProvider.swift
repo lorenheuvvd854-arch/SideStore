@@ -22,13 +22,14 @@ enum AnisetteProvider {
 
     private static func fetchRemote(handler: AnisetteServerHandler? = nil) async throws -> ALTAnisetteData {
         let serverUrlStrings = await AnisetteServersManager.shared.getActiveServerURLs()
-        let servers = serverUrlStrings.compactMap { URL(string: $0) }
+        // jkcoxson's server works with Apple's current sign-in checks (same default as iLoader); try it first.
+        let preferred = URL(string: "https://ani.jkcoxson.com")!
+        let servers = [preferred] + serverUrlStrings.compactMap { URL(string: $0) }.filter { $0.host != preferred.host }
         guard !servers.isEmpty else {
             throw AnisetteError.noServersConfigured
         }
 
-        let lastServer = UserDefaults.standard.menuAnisetteURL
-        let startIndex = servers.firstIndex(where: { $0.absoluteString == lastServer }) ?? 0
+        let startIndex = 0
 
         let provider = SideSign.AnisetteDataManager.shared
         let existingBlob = AnisetteConfigManager.shared.anisetteAdiBlob.flatMap { Data(base64Encoded: $0) }
