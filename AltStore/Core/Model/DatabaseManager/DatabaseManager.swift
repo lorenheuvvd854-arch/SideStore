@@ -317,7 +317,7 @@ public class DatabaseManager: @unchecked Sendable
                 }
                 else
                 {
-                    installedExtension = try InstalledExtension(resignedAppExtensionBundle: appExtension, originalBundleIdentifier: originalBundleID, context: context)
+                    installedExtension = try InstalledExtension(resignedAppExtensionBundle: appExtension, originalBundleIdentifier: originalBundleID, fallbackExpirationDate: installedApp.expirationDate, context: context)
                 }
                 
                 installedExtension.update(resignedAppExtensionBundle: appExtension)

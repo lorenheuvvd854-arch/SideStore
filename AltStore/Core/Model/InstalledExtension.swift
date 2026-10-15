@@ -33,7 +33,7 @@ public class InstalledExtension: BaseEntity, InstalledAppProtocol
         super.init(entity: entity, insertInto: context)
     }
     
-    public init(resignedAppExtensionBundle: ALTApplication, originalBundleIdentifier: String, context: NSManagedObjectContext) throws
+    public init(resignedAppExtensionBundle: ALTApplication, originalBundleIdentifier: String, fallbackExpirationDate: Date? = nil, context: NSManagedObjectContext) throws
     {
         super.init(entity: InstalledExtension.entity(), insertInto: context)
         
@@ -45,7 +45,9 @@ public class InstalledExtension: BaseEntity, InstalledAppProtocol
         #if targetEnvironment(simulator)
         self.expirationDate = self.refreshedDate.addingTimeInterval(60 * 60 * 24 * 7)
         #else
-        guard let expirationDate = resignedAppExtensionBundle.provisioningProfile?.expirationDate else {
+        // Third-party signers (SideInstaller, Sideloadly...) often sign extensions without their own profile;
+        // they live and die with the parent app, so use its expiration.
+        guard let expirationDate = resignedAppExtensionBundle.provisioningProfile?.expirationDate ?? fallbackExpirationDate else {
             throw ALTError.invalidApp(reason: "The app extension is missing a valid provisioning profile.")
         }
         self.expirationDate = expirationDate

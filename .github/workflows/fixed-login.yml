@@ -24,7 +24,18 @@ jobs:
         with:
           name: build-log
           path: build/logs
+      - name: Variant without app extensions (for SideInstaller / Sideloadly / other signers)
+        run: |
+          rm -rf noext && mkdir noext && cd noext
+          unzip -q ../SideStore.ipa
+          rm -rf Payload/*.app/PlugIns Payload/*.app/Extensions
+          zip -qry ../SideStore-NoExtensions.ipa Payload
+          cd .. && unzip -l SideStore-NoExtensions.ipa | grep -c appex || true
       - uses: actions/upload-artifact@v4
         with:
           name: SideStore-fixed-login.ipa
           path: SideStore.ipa
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SideStore-NoExtensions.ipa
+          path: SideStore-NoExtensions.ipa
