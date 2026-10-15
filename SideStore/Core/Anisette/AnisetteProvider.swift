@@ -11,6 +11,17 @@ import SideSign
 
 enum AnisetteProvider {
     static func fetch(handler: AnisetteServerHandler? = nil) async throws -> ALTAnisetteData {
+        // Apple now rejects the identities on-device (Android) anisette can offer: Android client info gets
+        // 503 from GSA and macOS client info gets -80045. Move existing installs to a Windows ADI server once,
+        // dropping the adi.pb that was provisioned by the on-device libraries.
+        let migrationKey = "SideStore.windowsAnisetteServerV1"
+        if !UserDefaults.standard.bool(forKey: migrationKey) {
+            debugLog("[AnisetteProvider] Switching to remote Windows ADI anisette; resetting adi.pb")
+            UserDefaults.standard.useOnDeviceAnisette = false
+            AnisetteConfigManager.shared.anisetteAdiBlob = nil
+            UserDefaults.standard.set(true, forKey: migrationKey)
+        }
+
         if UserDefaults.standard.useOnDeviceAnisette {
             debugLog("[AnisetteProvider] Fetching anisette via On-Device Anisette (ODA)...")
             return try await OnDeviceAnisetteManager.shared.fetchAnisetteData()
@@ -22,9 +33,10 @@ enum AnisetteProvider {
 
     private static func fetchRemote(handler: AnisetteServerHandler? = nil) async throws -> ALTAnisetteData {
         let serverUrlStrings = await AnisetteServersManager.shared.getActiveServerURLs()
-        // jkcoxson's server works with Apple's current sign-in checks (same default as iLoader); try it first.
-        let preferred = URL(string: "https://ani.jkcoxson.com")!
-        let servers = [preferred] + serverUrlStrings.compactMap { URL(string: $0) }.filter { $0.host != preferred.host }
+        // Windows ADI servers are the ones Apple's sign-in still accepts (iloader 2.3.8 uses jkcoxson's); try them first.
+        let preferred = ["https://ani.jkcoxson.com", "https://win.ani.sidestore.io"].compactMap { URL(string: $0) }
+        let preferredHosts = Set(preferred.compactMap(\.host))
+        let servers = preferred + serverUrlStrings.compactMap { URL(string: $0) }.filter { !preferredHosts.contains($0.host ?? "") }
         guard !servers.isEmpty else {
             throw AnisetteError.noServersConfigured
         }
